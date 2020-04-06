@@ -5,12 +5,12 @@ Monitors Amazon products specified in `_data/items.json`, and sends Email and SM
 
 **Pre-requisite**
 
-Requires an Amazon account
+Requires an AWS account
 
 ## Initialization Steps
 
 1. Modify `_data/items.json` with the name and url of products you want to watch
-2. Create a .env file with the following properties
+2. Create a `config/.env` file with the following properties. Example values shown below:
 
 ```
 NODE_ENV=development
@@ -23,5 +23,7 @@ RECIPIENT_PHONE_NUMBER=19492225555
 
 3. Run it
 ```
-   node amazon-product-alert.js
+   node server.js
 ```
+
+* You can also run `nodemon server.js` or `npm run dev` to watch for any changes during development, and automatically restart the server
