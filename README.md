@@ -1,7 +1,7 @@
 # amazon-product-alert-app-service
 Amazon Product Alert App - Service
 
-Monitors Amazon products specified in `_data/items.json`, and sends Email and SMS text alerts if product is available
+Monitors Amazon products specified in `_data/items.json`, and sends SMS text alerts if product is available
 
 **Pre-requisite**
 
@@ -16,6 +16,8 @@ Requires an AWS account
 NODE_ENV=development
 APP_PORT=5000
 
+AWS_ACCESS_KEY_ID=XXXXXXX
+AWS_SECRET_ACCESS_KEY=XXXXXXX
 AWS_REGION=us-west-2
 
 RECIPIENT_PHONE_NUMBER=19492225555

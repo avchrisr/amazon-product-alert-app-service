@@ -1,5 +1,5 @@
 const puppeteer = require('puppeteer')
-const Promise = require('bluebird')
+const Bluebird = require('bluebird')
 const { formatISO, isBefore, parseISO, sub } = require('date-fns')
 const AWS = require('aws-sdk')
 const fs = require('fs').promises
@@ -63,7 +63,7 @@ const run = async (req, res, next) => {
         height: 1050
     })
 
-    await Promise.map(
+    await Bluebird.map(
         items,
         async item => {
             const oneDayAgo = sub(Date.now(), { days: 1 })
@@ -74,14 +74,14 @@ const run = async (req, res, next) => {
 
                 if (available) {
                     itemsAvailable.push(item.name)
-                    item.found = formatISO(Date.now())
+                    item.found = formatISO(Date.now())          // 2020-04-03T18:10:17-07:00
                     console.log(`${item.name} is available.`)
                     await sendSMS(item)
                 } else {
                     console.log(`${item.name} is not available.`)
                 }
                 console.log('Waiting...')
-                return Promise.delay(4000)
+                return Bluebird.delay(4000)
             }
         },
         { concurrency: 1 }
