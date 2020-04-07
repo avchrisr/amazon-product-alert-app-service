@@ -84,6 +84,7 @@ try {
     // error-handler middleware MUST be placed after Mounting Routers in order to take effect
     app.use(errorHandler);
 
+    // no matching endpoint URL fallback error
     app.use((req, res) => {
         res.status(404).json({
             success: false,
@@ -91,6 +92,7 @@ try {
         })
     })
 } catch (err) {
+    // global fallback error handler
     console.error(err)
     res.status(500).json({
         success: false,

@@ -1,4 +1,3 @@
-// const router = require('express').Router();
 const router = require('express-promise-router')();
 
 // ** 'mergeParams: true' is needed to include this products router in other routers (e.g. /categories/:categoryId/products)
