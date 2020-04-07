@@ -1,6 +1,6 @@
 const router = require('express-promise-router')();
 
-const { run } = require('../util/amazon-product-alert')
+const { run } = require('../controllers/product-scan')
 
 
 // const {
