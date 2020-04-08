@@ -46,57 +46,59 @@ const getProduct = async (req, res, next) => {
     })
 }
 
+const createOrUpdateProduct = async (req, res, next) => {
+    const params = {
+        TableName: 'amazon-product-alert-app',
+        Item: {
+            id: {
+                S: req.body.id
+            },
+            name: {
+                S: req.body.name
+            },
+            url: {
+                S: req.body.url
+            },
+            priceThreshold: {
+                N: `${req.body.priceThreshold}`     // even if the DynamoDB datatype is a Number, the value here must be a string
+            },
+            // itemLastAvailableDateTime: {
+            //     S: formatISO(Date.now())        // 2020-04-03T18:10:17-07:00
+            // }
+        }
+    }
 
+    const results = await dynamodb.putItem(params).promise()
 
-/*
-const Course = require('../models/Course');
-const ErrorResponse = require('../utils/ErrorResponse');
-const asyncHandler = require('../middleware/async-handler');
-
-const createCourse = asyncHandler(async (req, res, next) => {
-    const user = await Course.create(req.body);
     res.status(201).json({
         success: true,
-        data: user
-    });
-});
+        data: results
+    })
+}
 
-const updateCourse = asyncHandler(async (req, res, next) => {
-    const user = await Course.findByIdAndUpdate(req.params.id, req.body, {
-        new: true,       // when we get the data, we want the returned user to be the newly updated user
-        runValidators: true
-    });
-    if (!user) {
-        next(new ErrorResponse(`Course not found with id = ${req.params.id}`, 404));
-        return;
+const deleteProduct = async (req, res, next) => {
+    const params = {
+        TableName: 'amazon-product-alert-app',
+        Key: {     // must provide all attributes. if sort key exists, must provide it
+            id: {
+                S: req.params.productId
+            }
+        },
+        // ConditionExpression: 'attribute_not_exists(id)'
     }
+
+    // If no matching item found by ID (primary key), DynamoDB will still return a success empty object {}
+    const results = dynamodb.deleteItem(params).promise()
 
     res.status(200).json({
         success: true,
-        data: user
-    });
-});
-
-const deleteCourse = asyncHandler(async (req, res, next) => {
-    const user = await Course.findByIdAndDelete(req.params.id);
-    if (!user) {
-        next(new ErrorResponse(`Course not found with id = ${req.params.id}`, 404));
-        return;
-    }
-
-    res.status(200).json({
-        success: true,
-        data: {}
-    });
-});
-*/
+        data: results
+    })
+}
 
 module.exports = {
     getProducts,
     getProduct,
-    // createProduct,
-    // updateProduct,
-    // deleteProduct
-};
-
-
+    createOrUpdateProduct,
+    deleteProduct
+}

@@ -1,20 +1,28 @@
 {
     "items": [
         {
+            "id": "9eae3dd6-d41b-46e7-b75b-1a1c22def4eb",
             "name": "Charmin TP",
-            "url": "https://www.amazon.com/gp/product/B0798C1NYR/ref=ppx_yo_dt_b_search_asin_title?ie=UTF8&psc=1"
+            "url": "https://www.amazon.com/gp/product/B0798C1NYR/ref=ppx_yo_dt_b_search_asin_title?ie=UTF8&psc=1",
+            "priceThreshold": 30
         },
         {
+            "id": "c7283217-f53a-4195-a82a-24f592a57489",
             "name": "Presto Paper Towels",
-            "url": "https://www.amazon.com/gp/product/B07QY8P3B1/ref=ppx_yo_dt_b_asin_title_o00_s00?ie=UTF8&psc=1"
+            "url": "https://www.amazon.com/gp/product/B07QY8P3B1/ref=ppx_yo_dt_b_asin_title_o00_s00?ie=UTF8&psc=1",
+            "priceThreshold": 50
         },
         {
+            "id": "2c87061b-3271-4f2e-82cf-28ffb83768ac",
             "name": "Angel Soft TP",
-            "url": "https://www.amazon.com/Angel-Soft-Toilet-Double-Regular/dp/B07SPY4HM8/ref=sr_1_1?crid=9RJ5GS2DWFKQ&keywords=toilet+paper&qid=1585684440&sprefix=toil%2Chpc%2C143&sr=8-1"
+            "url": "https://www.amazon.com/Angel-Soft-Toilet-Double-Regular/dp/B07SPY4HM8/ref=sr_1_1?crid=9RJ5GS2DWFKQ&keywords=toilet+paper&qid=1585684440&sprefix=toil%2Chpc%2C143&sr=8-1",
+            "priceThreshold": 15
         },
         {
+            "id": "f09c1263-2cc4-4d8c-9845-fba367830a61",
             "name": "Cornholio T-Shirt",
-            "url": "https://www.amazon.com/Animation-Shops-Butthead-Cornholio-T-Shirt-Large/dp/B06XBZ9XXB/ref=sr_1_4?crid=27E4X7EJMFFM2&dchild=1&keywords=cornholio+t-shirt&qid=1585716119&sprefix=cornholio%2Caps%2C213&sr=8-4"
+            "url": "https://www.amazon.com/Animation-Shops-Butthead-Cornholio-T-Shirt-Large/dp/B06XBZ9XXB/ref=sr_1_4?crid=27E4X7EJMFFM2&dchild=1&keywords=cornholio+t-shirt&qid=1585716119&sprefix=cornholio%2Caps%2C213&sr=8-4",
+            "priceThreshold": 25
         }
     ]
 }

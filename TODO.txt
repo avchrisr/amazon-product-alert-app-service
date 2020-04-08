@@ -1,3 +1,2 @@
 - create initial data loader script
-- add Create, Update, Delete for products
 - add tests. look into testing library for node.js
