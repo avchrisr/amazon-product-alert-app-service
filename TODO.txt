@@ -1,2 +1,1 @@
-- create initial data loader script
 - add tests. look into testing library for node.js
