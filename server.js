@@ -27,6 +27,7 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 // const bootcamps = require('./routes/bootcamps');
 const products = require('./routes/products');
 const productScan = require('./routes/product-scan');
+const phoneNumbers = require('./routes/phone-numbers');
 
 const app = express();
 
@@ -80,6 +81,7 @@ try {
     // app.use('/api/v1/bootcamps', bootcamps);
     app.use('/api/v1/products', products);
     app.use('/api/v1/product-scan', productScan);
+    app.use('/api/v1/phone-numbers', phoneNumbers);
 
     // error-handler middleware MUST be placed after Mounting Routers in order to take effect
     app.use(errorHandler);
