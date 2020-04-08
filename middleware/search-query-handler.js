@@ -1,3 +1,4 @@
+const ErrorResponse = require('../util/ErrorResponse')
 const AWS = require('aws-sdk');
 
 AWS.config.update({
@@ -21,7 +22,7 @@ const scanItems = async (model, reqQuery) => {
     console.log(JSON.stringify(reqQuery, null, 4))
 
     if (!model || !modelToTableMap[model]) {
-        throw new Error(`search-query-handler | scanItems - model is not valid = ${model}`)
+        throw new ErrorResponse(`search-query-handler | scanItems - model is not valid = ${model}`, 400)
     }
 
     const params = {

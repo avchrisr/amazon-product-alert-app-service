@@ -17,6 +17,8 @@ router.route('/')
     .get(searchQueryHandler('products'), getProducts)
     // .post(protectRoute, authorize('publisher', 'admin'), createCourse);
 
+router.route('/:productId')
+    .get(getProduct)
 
 
 /*
