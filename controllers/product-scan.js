@@ -72,11 +72,12 @@ async function checkItem(page, item) {
             const canSubscribe = await page.$('#rcx-subscribe-submit-button-announce')
             const notInStock = (await page.content()).match(/in stock on/gi)
             return (canAdd || canSubscribe) && !notInStock
-        } else {
-            console.log(`item price (${price}) is above the price threshold ($${priceThreshold})`)
         }
+        console.log(`item is available but the price (${price}) is above the price threshold ($${priceThreshold})`)
+        return false
     }
 
+    console.log(`${item.name.S} is not available.`)
     return false
 }
 
@@ -141,7 +142,7 @@ const runProductScan = async (req, res, next) => {
                 itemsAvailable.push(item.name.S)
                 // item.itemLastAvailableDateTime = formatISO(Date.now())          // 2020-04-03T18:10:17-07:00
                 console.log(`${item.name.S} is available.`)
-                // await sendSMS(item)
+                await sendSMS(item)
 
                 // update the product item in DynamoDB
                 const params = {
@@ -165,9 +166,8 @@ const runProductScan = async (req, res, next) => {
                     }
                 }
                 await dynamodb.putItem(params).promise()
-            } else {
-                console.log(`${item.name.S} is not available.`)
             }
+
             console.log('Waiting...')
             return Bluebird.delay(4000)
         }
