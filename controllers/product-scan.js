@@ -66,10 +66,14 @@ async function checkItem(page, item) {
         // const val = await (await sellingPriceElement.getProperty('innerHTML')).jsonValue()  // $18.99
         const price = await (await sellingPriceElement.getProperty('innerText')).jsonValue()  // $18.99
         const priceThreshold = parseFloat(item.priceThreshold.N)
+
         if (priceThreshold < 0 || parseFloat(price.replace(/[^\d.]/g, '')) <= priceThreshold) {
             const canAdd = await page.$('#add-to-cart-button')
+            const canSubscribe = await page.$('#rcx-subscribe-submit-button-announce')
             const notInStock = (await page.content()).match(/in stock on/gi)
-            return canAdd && !notInStock
+            return (canAdd || canSubscribe) && !notInStock
+        } else {
+            console.log(`item price (${price}) is above the price threshold ($${priceThreshold})`)
         }
     }
 
@@ -137,7 +141,7 @@ const runProductScan = async (req, res, next) => {
                 itemsAvailable.push(item.name.S)
                 // item.itemLastAvailableDateTime = formatISO(Date.now())          // 2020-04-03T18:10:17-07:00
                 console.log(`${item.name.S} is available.`)
-                await sendSMS(item)
+                // await sendSMS(item)
 
                 // update the product item in DynamoDB
                 const params = {
