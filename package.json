@@ -4,7 +4,7 @@
   "description": "Amazon Product Alert App - Service",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest --passWithNoTests",
     "start": "node server.js",
     "dev": "nodemon server.js"
   },
@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/avchrisr/amazon-product-alert-app-service#readme",
   "devDependencies": {
+    "jest": "^25.3.0",
     "nodemon": "^2.0.2"
   },
   "dependencies": {

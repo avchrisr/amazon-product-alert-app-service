@@ -61,10 +61,19 @@ async function checkItem(page, item) {
     // console.log(await page.content())
     // await page.screenshot({ path: `screenshot_${item.name}.png` })
 
-    const canAdd = await page.$('#add-to-cart-button')
-    const notInStock = (await page.content()).match(/in stock on/gi)
+    const sellingPriceElement = await page.$('#priceblock_ourprice')
+    if (sellingPriceElement) {
+        // const val = await (await sellingPriceElement.getProperty('innerHTML')).jsonValue()  // $18.99
+        const price = await (await sellingPriceElement.getProperty('innerText')).jsonValue()  // $18.99
+        const priceThreshold = parseFloat(item.priceThreshold.N)
+        if (priceThreshold < 0 || parseFloat(price.replace(/[^\d.]/g, '')) <= priceThreshold) {
+            const canAdd = await page.$('#add-to-cart-button')
+            const notInStock = (await page.content()).match(/in stock on/gi)
+            return canAdd && !notInStock
+        }
+    }
 
-    return canAdd && !notInStock
+    return false
 }
 
 async function sendSMS(item) {

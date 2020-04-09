@@ -1,6 +1,7 @@
 // -----------------
 // CRUD of products
 // -----------------
+const _ = require('lodash')
 const ErrorResponse = require('../util/ErrorResponse')
 const AWS = require('aws-sdk')
 
@@ -12,6 +13,8 @@ const dynamodb = new AWS.DynamoDB({
     apiVersion: '2012-08-10'
 })
 
+const dynamodbTableName = 'amazon-product-alert-app'
+
 // @route       GET /api/v1/products
 // @access      Public
 const getProducts = async (req, res, next) => {
@@ -22,7 +25,7 @@ const getProducts = async (req, res, next) => {
 // @access      Public
 const getProduct = async (req, res, next) => {
     const params = {
-        TableName: 'amazon-product-alert-app',
+        TableName: dynamodbTableName,
         Key: {      // must provide all attributes. if sort key exists, must provide it
             id: {
                 S: req.params.productId
@@ -47,8 +50,9 @@ const getProduct = async (req, res, next) => {
 }
 
 const createOrUpdateProduct = async (req, res, next) => {
+    const priceThreshold = _.get(req, 'body.priceThreshold', -1)
     const params = {
-        TableName: 'amazon-product-alert-app',
+        TableName: dynamodbTableName,
         Item: {
             id: {
                 S: req.body.id
@@ -60,7 +64,7 @@ const createOrUpdateProduct = async (req, res, next) => {
                 S: req.body.url
             },
             priceThreshold: {
-                N: `${req.body.priceThreshold}`     // even if the DynamoDB datatype is a Number, the value here must be a string
+                N: `${priceThreshold}`     // even if the DynamoDB datatype is a Number, the value here must be a string
             },
             // itemLastAvailableDateTime: {
             //     S: formatISO(Date.now())        // 2020-04-03T18:10:17-07:00
@@ -78,7 +82,7 @@ const createOrUpdateProduct = async (req, res, next) => {
 
 const deleteProduct = async (req, res, next) => {
     const params = {
-        TableName: 'amazon-product-alert-app',
+        TableName: dynamodbTableName,
         Key: {     // must provide all attributes. if sort key exists, must provide it
             id: {
                 S: req.params.productId

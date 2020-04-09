@@ -1,2 +1,2 @@
 - add tests. look into testing library for node.js
-  - AVA
+  - Jest

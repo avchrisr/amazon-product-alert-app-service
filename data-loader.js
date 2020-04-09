@@ -1,6 +1,7 @@
 // loads sample data to DynamoDB table - amazon-product-alert-app
 // Q) should this also provision the table if not exist?
 
+const _ = require('lodash')
 const Bluebird = require('bluebird')
 const sampleData = require('./_data/items').items
 const AWS = require('aws-sdk')
@@ -14,6 +15,8 @@ const dynamodb = new AWS.DynamoDB({
 })
 
 Bluebird.map(sampleData, async (item) => {
+    const priceThreshold = _.get(item, 'priceThreshold', -1)
+
     const params = {
         TableName: 'amazon-product-alert-app',
         Item: {
@@ -27,7 +30,7 @@ Bluebird.map(sampleData, async (item) => {
                 S: item.url
             },
             priceThreshold: {
-                N: `${item.priceThreshold}`     // even if the DynamoDB datatype is a Number, the value here must be a string
+                N: `${priceThreshold}`     // even if the DynamoDB datatype is a Number, the value here must be a string
             },
             // itemLastAvailableDateTime: {
             //     S: formatISO(Date.now())        // 2020-04-03T18:10:17-07:00
