@@ -117,8 +117,8 @@ const confirmPhoneNumber = async (req, res, next) => {
     }
 
     const tenMinutesAgo = sub(Date.now(), { minutes: 10 })
-    if (_.get(results, 'Item.registrationCode.S' !== req.body.registrationCode ||
-        isBefore(parseISO(_.get(results, 'Item.registrationCodeCreatedDateTime.S')), tenMinutesAgo))) {
+    if (_.get(results, 'Item.registrationCode.S') !== req.body.registrationCode ||
+        isBefore(parseISO(_.get(results, 'Item.registrationCodeCreatedDateTime.S')), tenMinutesAgo)) {
         throw new ErrorResponse(genericErrorMessage, 400)
     }
 
