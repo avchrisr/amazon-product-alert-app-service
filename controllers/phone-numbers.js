@@ -5,6 +5,7 @@ const _ = require('lodash')
 const { formatISO, isBefore, parseISO, sub } = require('date-fns')
 const ErrorResponse = require('../util/ErrorResponse')
 const AWS = require('aws-sdk')
+const util = require('../util/util')
 
 AWS.config.update({
     region: process.env.AWS_REGION || 'us-west-2'
@@ -25,11 +26,13 @@ const dynamodbTableName = 'apaa-phone-numbers'
 // @route       GET /api/v1/phone-numbers/:phoneNumber
 // @access      Public
 const getPhoneNumber = async (req, res, next) => {
+    const phoneNumber = util.validatePhoneNumber(req.params.phoneNumber)
+
     const params = {
         TableName: dynamodbTableName,
         Key: {      // must provide all attributes. if sort key exists, must provide it
             phoneNumber: {
-                S: req.params.phoneNumber
+                S: phoneNumber
             }
         }
     }
@@ -52,9 +55,7 @@ const getPhoneNumber = async (req, res, next) => {
 }
 
 const registerPhoneNumber = async (req, res, next) => {
-    if (!req.body.phoneNumber) {
-        throw new ErrorResponse(`phoneNumber is required.`, 400)
-    }
+    const phoneNumber = util.validatePhoneNumber(req.body.phoneNumber)
 
     const min = 100000
     const max = 999999
@@ -65,7 +66,7 @@ const registerPhoneNumber = async (req, res, next) => {
         TableName: dynamodbTableName,
         Item: {
             phoneNumber: {
-                S: req.body.phoneNumber
+                S: phoneNumber
             },
             registrationCode: {
                 S: `${registrationCode}`
@@ -153,11 +154,12 @@ const confirmPhoneNumber = async (req, res, next) => {
 }
 
 const deletePhoneNumber = async (req, res, next) => {
+    const phoneNumber = util.validatePhoneNumber(req.params.phoneNumber)
     const params = {
         TableName: dynamodbTableName,
         Key: {     // must provide all attributes. if sort key exists, must provide it
             phoneNumber: {
-                S: req.params.phoneNumber
+                S: phoneNumber
             }
         },
         // ConditionExpression: 'attribute_not_exists(id)'

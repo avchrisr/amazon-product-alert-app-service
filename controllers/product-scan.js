@@ -1,9 +1,10 @@
+const _ = require('lodash')
 const puppeteer = require('puppeteer')
 const Bluebird = require('bluebird')
 const { formatISO, isBefore, parseISO, sub } = require('date-fns')
 const AWS = require('aws-sdk')
-const fs = require('fs').promises
 const ErrorResponse = require('../util/ErrorResponse')
+const util = require('../util/util')
 
 AWS.config.update({
     region: process.env.AWS_REGION || 'us-west-2'     // SMS messaging is only available in limited regions. Check beforehand
@@ -14,47 +15,6 @@ const dynamodb = new AWS.DynamoDB({
 })
 
 const dynamodbTableName = 'amazon-product-alert-app'
-
-const itemsDataPath = '../_data'
-const file = require(`${itemsDataPath}/items`)
-const items = file.items
-
-async function checkItemFromSampleFile(page, item) {
-    console.log(`Checking ${item.name}`)
-    await page.goto(item.url)
-
-    // --- captures screenshot ---
-    // console.log(await page.content())
-    // await page.screenshot({ path: `screenshot_${item.name}.png` })
-
-    const canAdd = await page.$('#add-to-cart-button')
-    const notInStock = (await page.content()).match(/in stock on/gi)
-
-    return canAdd && !notInStock
-}
-
-async function sendSMSFromSampleFile(item) {
-    const textMessage = `${item.name} available! ${item.url}`
-    const phoneNumber = process.env.RECIPIENT_PHONE_NUMBER      // international code is required. e.g.) 19495557777
-
-    if (!phoneNumber) {
-        console.error(`ERROR - Recipient Phone Number is required.`)
-        return;
-    }
-
-    const params = {
-        Message: textMessage,
-        PhoneNumber: phoneNumber
-    }
-
-    const publishTextPromise = new AWS.SNS({ apiVersion: '2010-03-31' }).publish(params).promise();
-
-    publishTextPromise.then(data => {
-        console.log("MessageID is " + data.MessageId);
-    }).catch(err => {
-        console.error(err, err.stack);
-    })
-}
 
 async function checkItem(page, item) {
     console.log(`Checking ${item.name.S}`)
@@ -86,12 +46,9 @@ async function checkItem(page, item) {
 
 async function sendSMS(item, phoneNumber) {
     const textMessage = `${item.name.S} available! ${item.url.S}`
-    // const phoneNumber = process.env.RECIPIENT_PHONE_NUMBER      // international code is required. e.g.) 19495557777
 
     // adding the US International Code prefix 1
-    if (phoneNumber.length === 10) {
-        phoneNumber = '1' + phoneNumber
-    }
+    phoneNumber = '1' + phoneNumber
 
     const params = {
         Message: textMessage,
@@ -108,13 +65,11 @@ async function sendSMS(item, phoneNumber) {
 }
 
 const runProductScan = async (req, res, next) => {
-    if (!req.body.phoneNumber) {
-        throw new ErrorResponse(`phoneNumber is required.`, 400)
-    }
+    const phoneNumber = util.validatePhoneNumber(req.body.phoneNumber)
 
-    const phoneNumber = req.body.phoneNumber.replace(/[^0-9]/g, '')
-    if (phoneNumber.length < 10) {
-        throw new ErrorResponse(`phoneNumber (${req.body.phoneNumber}) is not valid.`, 400)
+    const isConfirmedPhoneNumber = await isPhoneNumberConfirmed(phoneNumber)
+    if (!isConfirmedPhoneNumber) {
+        throw new ErrorResponse(`Phone number must be registered and confirmed before running the product scan.`, 400)
     }
 
     const itemsAvailable = []
@@ -201,59 +156,24 @@ const runProductScan = async (req, res, next) => {
     })
 }
 
-
-const runProductScanFromSampleFile = async (req, res, next) => {
-    const itemsAvailable = []
-
-    console.log('')
-    console.log(`Starting at ${formatISO(Date.now())}`)
-    const browser = await puppeteer.launch()
-
-    const page = await browser.newPage()
-
-    await page.setViewport({
-        width: 1680,
-        height: 1050
-    })
-
-    await Bluebird.map(
-        items,
-        async item => {
-            const oneDayAgo = sub(Date.now(), { days: 1 })
-
-            // only send alert once a day if an item became available
-            if (!item.itemLastAvailableDateTime || isBefore(parseISO(item.itemLastAvailableDateTime), oneDayAgo)) {
-                const available = await checkItemFromSampleFile(page, item)
-
-                if (available) {
-                    itemsAvailable.push(item.name)
-                    item.itemLastAvailableDateTime = formatISO(Date.now())          // 2020-04-03T18:10:17-07:00
-                    console.log(`${item.name} is available.`)
-                    await sendSMSFromSampleFile(item)
-                } else {
-                    console.log(`${item.name} is not available.`)
-                }
-                console.log('Waiting...')
-                return Bluebird.delay(4000)
+const isPhoneNumberConfirmed = async (phoneNumber) => {
+    const params = {
+        TableName: 'apaa-phone-numbers',
+        Key: {                  // must provide all attributes. if sort key exists, must provide it
+            phoneNumber: {
+                S: phoneNumber
             }
-        },
-        { concurrency: 1 }
-    )
+        }
+    }
 
-    const update = { items: items }
-    console.log('finishing...')
+    // if no matching item found, it returns an empty object {}
+    const results = await dynamodb.getItem(params).promise()
 
-    await fs.writeFile(`${itemsDataPath}/items.json`, JSON.stringify(update, null, 4))
-    await browser.close()
-    console.log('browser closed')
+    console.log('----------   results   ---------')
+    console.log(JSON.stringify(results, null, 4))
 
-    res.status(200).json({
-        success: true,
-        itemsAvailable
-    })
+    return _.get(results, 'Item.confirmed.BOOL', false)
 }
-
-// runProductScanFromSampleFile()
 
 // setInterval(async function () {
 //     await runProductScanFromSampleFile()
