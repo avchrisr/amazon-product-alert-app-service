@@ -3,6 +3,7 @@ const Bluebird = require('bluebird')
 const { formatISO, isBefore, parseISO, sub } = require('date-fns')
 const AWS = require('aws-sdk')
 const fs = require('fs').promises
+const ErrorResponse = require('../util/ErrorResponse')
 
 AWS.config.update({
     region: process.env.AWS_REGION || 'us-west-2'     // SMS messaging is only available in limited regions. Check beforehand
@@ -11,6 +12,8 @@ AWS.config.update({
 const dynamodb = new AWS.DynamoDB({
     apiVersion: '2012-08-10'
 })
+
+const dynamodbTableName = 'amazon-product-alert-app'
 
 const itemsDataPath = '../_data'
 const file = require(`${itemsDataPath}/items`)
@@ -81,13 +84,13 @@ async function checkItem(page, item) {
     return false
 }
 
-async function sendSMS(item) {
+async function sendSMS(item, phoneNumber) {
     const textMessage = `${item.name.S} available! ${item.url.S}`
-    const phoneNumber = process.env.RECIPIENT_PHONE_NUMBER      // international code is required. e.g.) 19495557777
+    // const phoneNumber = process.env.RECIPIENT_PHONE_NUMBER      // international code is required. e.g.) 19495557777
 
-    if (!phoneNumber) {
-        console.error(`ERROR - Recipient Phone Number is required.`)
-        return;
+    // adding the US International Code prefix 1
+    if (phoneNumber.length === 10) {
+        phoneNumber = '1' + phoneNumber
     }
 
     const params = {
@@ -105,6 +108,15 @@ async function sendSMS(item) {
 }
 
 const runProductScan = async (req, res, next) => {
+    if (!req.body.phoneNumber) {
+        throw new ErrorResponse(`phoneNumber is required.`, 400)
+    }
+
+    const phoneNumber = req.body.phoneNumber.replace(/[^0-9]/g, '')
+    if (phoneNumber.length < 10) {
+        throw new ErrorResponse(`phoneNumber (${req.body.phoneNumber}) is not valid.`, 400)
+    }
+
     const itemsAvailable = []
 
     console.log('')
@@ -112,7 +124,7 @@ const runProductScan = async (req, res, next) => {
 
     // get all items from dynamodb
     const params = {
-        TableName: 'amazon-product-alert-app'
+        TableName: dynamodbTableName
     }
     const results = await dynamodb.scan(params).promise()
     if (results.Count == 0) {
@@ -121,11 +133,8 @@ const runProductScan = async (req, res, next) => {
             data: `No product exists in DB. Please add some products.`
         })
     }
-
     const browser = await puppeteer.launch()
-
     const page = await browser.newPage()
-
     await page.setViewport({
         width: 1680,
         height: 1050
@@ -142,11 +151,11 @@ const runProductScan = async (req, res, next) => {
                 itemsAvailable.push(item.name.S)
                 // item.itemLastAvailableDateTime = formatISO(Date.now())          // 2020-04-03T18:10:17-07:00
                 console.log(`${item.name.S} is available.`)
-                await sendSMS(item)
+                await sendSMS(item, phoneNumber)
 
                 // update the product item in DynamoDB
                 const params = {
-                    TableName: 'amazon-product-alert-app',
+                    TableName: dynamodbTableName,
                     Item: {
                         id: {
                             S: item.id.S
