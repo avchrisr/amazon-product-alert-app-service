@@ -7,6 +7,8 @@ const ErrorResponse = require('../util/ErrorResponse')
 const util = require('../util/util')
 
 AWS.config.update({
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
     region: process.env.AWS_REGION || 'us-west-2'     // SMS messaging is only available in limited regions. Check beforehand
 })
 
