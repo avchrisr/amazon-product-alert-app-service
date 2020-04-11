@@ -122,6 +122,9 @@ const runProductScan = async (req, res, next) => {
                         priceThreshold: {
                             N: `${item.priceThreshold.N}`     // even if the DynamoDB datatype is a Number, the value here must be a string
                         },
+                        phoneNumber: {
+                            S: item.phoneNumber.S
+                        },
                         itemLastAvailableDateTime: {
                             S: formatISO(Date.now())        // 2020-04-03T18:10:17-07:00
                         }
