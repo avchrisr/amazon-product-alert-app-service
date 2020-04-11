@@ -31,7 +31,7 @@ async function checkItem(page, item) {
     // console.log(await page.content())
     // await page.screenshot({ path: `screenshot_${item.name}.png` })
 
-    const sellingPriceElement = await page.$('#priceblock_ourprice')
+    const sellingPriceElement = await page.$('#priceblock_ourprice') || await page.$('#priceblock_saleprice') || await page.$('.offer-price')
     if (sellingPriceElement) {
         // const val = await (await sellingPriceElement.getProperty('innerHTML')).jsonValue()  // $18.99
         const price = await (await sellingPriceElement.getProperty('innerText')).jsonValue()  // $18.99
