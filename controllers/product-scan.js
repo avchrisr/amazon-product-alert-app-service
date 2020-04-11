@@ -92,6 +92,11 @@ const runProductScan = async (req, res, next) => {
         height: 1050
     })
 
+    // To ensure Amazon doesn't detect it as a Bot
+    await page.setExtraHTTPHeaders({
+        'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8'
+    })
+
     Bluebird.map(results.Items, async item => {
         const oneDayAgo = sub(Date.now(), { days: 1 })
 
