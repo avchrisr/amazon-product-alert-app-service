@@ -73,6 +73,9 @@ const createOrUpdateProduct = async (req, res, next) => {
             // }
         }
     }
+    if (req.body.phoneNumber) {
+        params.Item.phoneNumber = { S: `${req.body.phoneNumber}` }
+    }
 
     const results = await dynamodb.putItem(params).promise()
 
