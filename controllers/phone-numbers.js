@@ -5,7 +5,7 @@ const _ = require('lodash')
 const { formatISO, isBefore, parseISO, sub } = require('date-fns')
 const ErrorResponse = require('../util/ErrorResponse')
 const AWS = require('aws-sdk')
-const uuid = require('uuid/v4');
+const { v4: uuidv4 } = require('uuid');
 const util = require('../util/util')
 const sampleData = require('../_data/items').items
 
@@ -169,7 +169,7 @@ const confirmPhoneNumber = async (req, res, next) => {
                 TableName: 'amazon-product-alert-app',
                 Item: {
                     id: {
-                        S: uuid()
+                        S: uuidv4()
                     },
                     name: {
                         S: item.name
