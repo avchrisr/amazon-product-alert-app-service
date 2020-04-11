@@ -18,6 +18,11 @@ require('dotenv').config({ path: './config/.env' })
 
 const NODE_ENV = process.env.NODE_ENV || 'development'
 
+// disable console.log() in production
+if (NODE_ENV === 'production') {
+    console.log = () => {}
+}
+
 // connect to mongodb database
 // mongoDbConnect()
 
