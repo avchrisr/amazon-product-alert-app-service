@@ -18,11 +18,6 @@ require('dotenv').config({ path: './config/.env' })
 
 const NODE_ENV = process.env.NODE_ENV || 'development'
 
-// disable console.log() in production
-if (NODE_ENV === 'production') {
-    console.log = () => {}
-}
-
 // connect to mongodb database
 // mongoDbConnect()
 
@@ -114,7 +109,14 @@ try {
 }
 
 const APP_PORT = process.env.APP_PORT || 5000
-const server = app.listen(APP_PORT, () => console.log(`server started in ${NODE_ENV} mode on port ${APP_PORT}`.cyan.bold))
+const server = app.listen(APP_PORT, () => {
+    console.log(`server started in ${NODE_ENV} mode on port ${APP_PORT}`.cyan.bold)
+
+    // disable console.log() in production
+    if (NODE_ENV === 'production') {
+        console.log = () => { }
+    }
+})
 
 // Handle unhandled promise rejections. No need to use try/catch in many async/awaits!
 process.on('unhandledRejection', (err, promise) => {
