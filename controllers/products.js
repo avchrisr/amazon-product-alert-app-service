@@ -4,6 +4,7 @@
 const _ = require('lodash')
 const ErrorResponse = require('../util/ErrorResponse')
 const AWS = require('aws-sdk')
+const util = require('../util/util')
 
 AWS.config.update({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -74,7 +75,8 @@ const createOrUpdateProduct = async (req, res, next) => {
         }
     }
     if (req.body.phoneNumber) {
-        params.Item.phoneNumber = { S: `${req.body.phoneNumber}` }
+        const phoneNumber = util.validatePhoneNumber(req.body.phoneNumber)
+        params.Item.phoneNumber = { S: phoneNumber }
     }
 
     const results = await dynamodb.putItem(params).promise()

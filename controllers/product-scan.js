@@ -157,7 +157,7 @@ const runProductScan = async (req, res, next) => {
 
     const productItemsToCheck = results.Items.map(item => item.name.S)
     const responseData = {
-        itemsToCheck: productItemsToCheck,
+        itemsToCheck: productItemsToCheck.sort(),
         message: `You will receive a text alert as each product becomes available below your price threshold.`
     }
     res.status(200).json({

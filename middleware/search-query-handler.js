@@ -1,5 +1,6 @@
 const ErrorResponse = require('../util/ErrorResponse')
 const AWS = require('aws-sdk');
+const util = require('../util/util')
 
 AWS.config.update({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -37,7 +38,7 @@ const scanItems = async (model, reqQuery) => {
 
         // ProjectionExpression: "LastPostDateTime, Message, Tags",    // JSON property fields you want to retrieve. If not specified, all are returned
         // Select: 'COUNT',               // only get the counts, no items are returned
-        // ConsistentRead: true,             // false by default
+        ConsistentRead: true,             // false by default
         // ReturnConsumedCapacity: 'TOTAL'   // response includes metadata about consumed capacity for that transaction
     }
 
@@ -54,13 +55,15 @@ const scanItems = async (model, reqQuery) => {
     }
 
     if (reqQuery.phoneNumber) {
+        const phoneNumber = util.validatePhoneNumber(reqQuery.phoneNumber)
+
         params.ExpressionAttributeNames = {
             '#phoneNumber': 'phoneNumber'
         }
         params.FilterExpression = '#phoneNumber = :phoneNumber'     // filter to apply AFTER scanning all items first
         params.ExpressionAttributeValues = {
             [queryParamsMap.phoneNumber]: {
-                S: reqQuery.phoneNumber
+                S: phoneNumber
             }
         }
     }
