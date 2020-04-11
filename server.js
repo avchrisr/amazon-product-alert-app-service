@@ -112,10 +112,10 @@ const APP_PORT = process.env.APP_PORT || 5000
 const server = app.listen(APP_PORT, () => {
     console.log(`server started in ${NODE_ENV} mode on port ${APP_PORT}`.cyan.bold)
 
-    // disable console.log() in production
-    if (NODE_ENV === 'production') {
-        console.log = () => { }
-    }
+    // disable console.log() in production. I don't see a reason for it in BE. Perhaps FE yes.
+    // if (NODE_ENV === 'production') {
+    //     console.log = () => { }
+    // }
 })
 
 // Handle unhandled promise rejections. No need to use try/catch in many async/awaits!
