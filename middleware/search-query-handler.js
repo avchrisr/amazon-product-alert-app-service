@@ -15,7 +15,8 @@ const modelToTableMap = {
     products: 'amazon-product-alert-app'
 }
 const queryParamsMap = {
-    name: ':productName'
+    name: ':productName',
+    phoneNumber: ':phoneNumber'
 }
 
 const scanItems = async (model, reqQuery) => {
@@ -52,6 +53,18 @@ const scanItems = async (model, reqQuery) => {
         }
     }
 
+    if (reqQuery.phoneNumber) {
+        params.ExpressionAttributeNames = {
+            '#phoneNumber': 'phoneNumber'
+        }
+        params.FilterExpression = '#phoneNumber = :phoneNumber'     // filter to apply AFTER scanning all items first
+        params.ExpressionAttributeValues = {
+            [queryParamsMap.phoneNumber]: {
+                S: reqQuery.phoneNumber
+            }
+        }
+    }
+
     return await dynamodb.scan(params).promise()
 }
 
@@ -74,81 +87,6 @@ const searchQueryHandler = (model) => async (req, res, next) => {
     }
 
     next()
-
-
-    /*
-        // // fields to exclude, so it won't be passed to mongoDB's find filter params
-        // // this could be a global level constant variable
-        // const excludeFields = ['select', 'sort', 'page', 'limit'];
-        // excludeFields.forEach(param => delete reqQuery[param]);
-
-        let queryStr = JSON.stringify(reqQuery);
-
-        // prepend '$' on gt|gte|lt|lte|in that came from URL query parameters so they can be used for mongoDB's find filter
-        queryStr = queryStr.replace(/\b(gt|gte|lt|lte|in)\b/g, match => `$${match}`);
-
-        let dbQuery = model.find(JSON.parse(queryStr));
-
-        // 'courses' name must match the virtuals name defined in the model schema
-        // *** populate the ObjectID reference field with actual data ***
-        if (populate) {
-            dbQuery = dbQuery.populate(populate);
-        }
-
-        // SELECT fields to return, if 'select' query parameter was provided by bootcamp in the request
-        if (req.query.select) {
-            const fields = req.query.select.split(',').join(' ');
-            dbQuery = dbQuery.select(fields);       // '.select()' is a mongoose API, which only returns the selected fields + _id
-        }
-
-        // SORT
-        if (req.query.sort) {
-            const sortBy = req.query.sort.split(',').join(' ');
-            dbQuery = dbQuery.sort(sortBy);
-        } else {
-            // default sort
-            dbQuery = dbQuery.sort('-createdAt');       // sort by 'createdAt' DESC
-        }
-
-        // PAGINATION and LIMIT
-        const page = parseInt(req.query.page, 10) || 1;
-        const limit = parseInt(req.query.limit, 10) || 100;
-        const startIndex = (page - 1) * limit;
-        const endIndex = page * limit;
-        const total = await model.countDocuments();
-
-        dbQuery = dbQuery.skip(startIndex).limit(limit);
-
-        // execute dbQuery
-        const results = await dbQuery;
-
-        // Pagination result
-        const pagination = {};
-
-        if (endIndex < total) {
-            pagination.next = {
-                page: page + 1,
-                limit
-            };
-        }
-
-        if (startIndex > 0) {
-            pagination.prev = {
-                page: page - 1,
-                limit
-            }
-        }
-
-        res.advancedQueryResults = {
-            success: true,
-            count: results.length,
-            pagination,
-            data: results
-        };
-
-        next();
-    */
-
 }
 
 module.exports = searchQueryHandler

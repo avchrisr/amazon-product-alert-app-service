@@ -5,7 +5,9 @@ const _ = require('lodash')
 const { formatISO, isBefore, parseISO, sub } = require('date-fns')
 const ErrorResponse = require('../util/ErrorResponse')
 const AWS = require('aws-sdk')
+const uuid = require('uuid/v4');
 const util = require('../util/util')
+const sampleData = require('../_data/items').items
 
 AWS.config.update({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -16,6 +18,11 @@ AWS.config.update({
 const dynamodb = new AWS.DynamoDB({
     apiVersion: '2012-08-10'
 })
+
+const queryParamsMap = {
+    name: ':productName',
+    phoneNumber: ':phoneNumber'
+}
 
 const dynamodbTableName = 'apaa-phone-numbers'
 
@@ -150,7 +157,41 @@ const confirmPhoneNumber = async (req, res, next) => {
         }
     }
 
-    results = await dynamodb.putItem(params).promise()
+    await dynamodb.putItem(params).promise()
+
+    // put initial products for that phone number, only if there aren't any items yet
+    const products = await scanItems(phoneNumber)
+    if (products.Count === 0) {
+        for await (let item of sampleData) {
+            const priceThreshold = _.get(item, 'priceThreshold', -1)
+
+            const params = {
+                TableName: 'amazon-product-alert-app',
+                Item: {
+                    id: {
+                        S: uuid()
+                    },
+                    name: {
+                        S: item.name
+                    },
+                    url: {
+                        S: item.url
+                    },
+                    priceThreshold: {
+                        N: `${priceThreshold}`     // even if the DynamoDB datatype is a Number, the value here must be a string
+                    },
+                    phoneNumber: {
+                        S: `${phoneNumber}`
+                    }
+                    // itemLastAvailableDateTime: {
+                    //     S: formatISO(Date.now())        // 2020-04-03T18:10:17-07:00
+                    // }
+                }
+            }
+
+            await dynamodb.putItem(params).promise()
+        }
+    }
 
     res.status(201).json({
         success: true,
@@ -177,6 +218,24 @@ const deletePhoneNumber = async (req, res, next) => {
         success: true,
         data: results
     })
+}
+
+const scanItems = async (phoneNumber) => {
+    const params = {
+        TableName: 'amazon-product-alert-app'
+    }
+    if (phoneNumber) {
+        params.ExpressionAttributeNames = {
+            '#phoneNumber': 'phoneNumber'
+        }
+        params.FilterExpression = '#phoneNumber = :phoneNumber'     // filter to apply AFTER scanning all items first
+        params.ExpressionAttributeValues = {
+            [queryParamsMap.phoneNumber]: {
+                S: phoneNumber
+            }
+        }
+    }
+    return await dynamodb.scan(params).promise()
 }
 
 module.exports = {

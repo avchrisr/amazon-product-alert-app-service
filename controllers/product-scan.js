@@ -18,6 +18,11 @@ const dynamodb = new AWS.DynamoDB({
 
 const dynamodbTableName = 'amazon-product-alert-app'
 
+const queryParamsMap = {
+    name: ':productName',
+    phoneNumber: ':phoneNumber'
+}
+
 async function checkItem(page, item) {
     console.log(`Checking ${item.name.S}`)
     await page.goto(item.url.S)
@@ -59,10 +64,20 @@ const runProductScan = async (req, res, next) => {
     console.log('')
     console.log(`Starting at ${formatISO(Date.now())}`)
 
-    // get all items from dynamodb
+    // get items associated with the phone number from dynamodb
     const params = {
-        TableName: dynamodbTableName
+        TableName: dynamodbTableName,
+        ExpressionAttributeNames: {
+            '#phoneNumber': 'phoneNumber'
+        },
+        FilterExpression: '#phoneNumber = :phoneNumber',     // filter to apply AFTER scanning all items first
+        ExpressionAttributeValues: {
+            [queryParamsMap.phoneNumber]: {
+                S: phoneNumber
+            }
+        }
     }
+
     const results = await dynamodb.scan(params).promise()
     if (results.Count == 0) {
         res.status(200).json({
