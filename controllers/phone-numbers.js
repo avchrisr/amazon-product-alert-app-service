@@ -86,6 +86,8 @@ const registerPhoneNumber = async (req, res, next) => {
     }
 
     const results = await dynamodb.putItem(params).promise()
+    const textMessage = `Your security code: ${registrationCode}. Code expires in 10 minutes.`
+    await util.sendSMS(phoneNumber, textMessage)
 
     res.status(201).json({
         success: true,
@@ -98,13 +100,14 @@ const confirmPhoneNumber = async (req, res, next) => {
         throw new ErrorResponse(`phoneNumber and registrationCode are required.`, 400)
     }
 
+    const phoneNumber = util.validatePhoneNumber(req.body.phoneNumber)
     const genericErrorMessage = 'Not Confirmed. Either the phone number does not exist or the entered code is invalid.'
 
     let params = {
         TableName: dynamodbTableName,
-        Key: {      // must provide all attributes. if sort key exists, must provide it
+        Key: {                          // must provide all attributes. if sort key exists, must provide it
             phoneNumber: {
-                S: req.body.phoneNumber
+                S: phoneNumber
             }
         }
     }
@@ -130,7 +133,7 @@ const confirmPhoneNumber = async (req, res, next) => {
         TableName: dynamodbTableName,
         Item: {
             phoneNumber: {
-                S: req.body.phoneNumber
+                S: phoneNumber
             },
             // registrationCode: {          // these will be removed if not included explictly
             //     S: registrationCode

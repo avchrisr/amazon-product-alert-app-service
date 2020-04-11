@@ -46,26 +46,6 @@ async function checkItem(page, item) {
     return false
 }
 
-async function sendSMS(item, phoneNumber) {
-    const textMessage = `${item.name.S} available! ${item.url.S}`
-
-    // adding the US International Code prefix 1
-    phoneNumber = '1' + phoneNumber
-
-    const params = {
-        Message: textMessage,
-        PhoneNumber: phoneNumber
-    }
-
-    const publishTextPromise = new AWS.SNS({ apiVersion: '2010-03-31' }).publish(params).promise();
-
-    publishTextPromise.then(data => {
-        console.log("MessageID is " + data.MessageId);
-    }).catch(err => {
-        console.error(err, err.stack);
-    })
-}
-
 const runProductScan = async (req, res, next) => {
     const phoneNumber = util.validatePhoneNumber(req.body.phoneNumber)
 
@@ -108,7 +88,8 @@ const runProductScan = async (req, res, next) => {
                 itemsAvailable.push(item.name.S)
                 // item.itemLastAvailableDateTime = formatISO(Date.now())          // 2020-04-03T18:10:17-07:00
                 console.log(`${item.name.S} is available.`)
-                await sendSMS(item, phoneNumber)
+                const textMessage = `${item.name.S} available! ${item.url.S}`
+                await util.sendSMS(phoneNumber, textMessage)
 
                 // update the product item in DynamoDB
                 const params = {

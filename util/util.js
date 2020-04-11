@@ -9,6 +9,25 @@ const validatePhoneNumber = (phoneNumber) => {
     return phoneNumber.replace(/[^0-9]/g, '')
 }
 
+const sendSMS = async (phoneNumber, textMessage) => {
+    // adding the US International Code prefix 1
+    phoneNumber = '1' + phoneNumber
+
+    const params = {
+        Message: textMessage,
+        PhoneNumber: phoneNumber
+    }
+
+    const publishTextPromise = new AWS.SNS({ apiVersion: '2010-03-31' }).publish(params).promise();
+
+    publishTextPromise.then(data => {
+        console.log("MessageID is " + data.MessageId);
+    }).catch(err => {
+        console.error(err, err.stack);
+    })
+}
+
 module.exports = {
-    validatePhoneNumber
+    validatePhoneNumber,
+    sendSMS
 }
