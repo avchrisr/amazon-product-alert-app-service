@@ -1,18 +1,21 @@
 # amazon-product-alert-app-service
 Amazon Product Alert App - Service
 
-[Amazon Product Alert App](www.chrisro.tech)
+[Amazon Product Alert App](https://www.chrisro.tech)
 
 Monitors user-specified Amazon products, and sends SMS text alerts if product is available under user's max price threshold
 
-## Technical Design Architecture
+## Technical Design
 - express.js (REST-API)
 - socket.io (WebSocket)
   - two-way live communication between server and client browser
-- dynamoDB
+- DynamoDB
   - main datastore
 - SNS SMS messaging
   - sending texts
+
+### Architecture
+- ELB (https) <--> EC2 (Node.js app) <--> DynamoDB
 
 ## Initialization Steps
 
