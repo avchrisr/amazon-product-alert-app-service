@@ -12,6 +12,7 @@ const hpp = require('hpp')
 const cors = require('cors')
 const errorHandler = require('./middleware/error-handler')
 // const mongoDbConnect = require('./config/mongodb-conn')
+const { socketClientHandler } = require('./socket-io')
 
 // load env variables
 require('dotenv').config({ path: './config/.env' })
@@ -109,14 +110,29 @@ try {
 }
 
 const APP_PORT = process.env.APP_PORT || 5000
+
+// ----------------  Express (REST-API)  ------------------------------------------
+/*
 const server = app.listen(APP_PORT, () => {
     console.log(`server started in ${NODE_ENV} mode on port ${APP_PORT}`.cyan.bold)
-
     // disable console.log() in production. I don't see a reason for it in BE. Perhaps FE yes.
     // if (NODE_ENV === 'production') {
     //     console.log = () => { }
     // }
 })
+*/
+// -------------------------------------------------------------------------------
+
+// -------  SOCKET.IO  (includes Express REST-API through the SAME PORT!)  -------
+const socketServer = require('http').createServer(app)
+const io = require('socket.io')(socketServer)     // socket-io version between Server and Client must match!
+io.on('connection', client => {
+    socketClientHandler(client)
+})
+socketServer.listen(APP_PORT, () => {
+    console.log(`socketServer started in ${NODE_ENV} mode on port ${APP_PORT}`.cyan.bold)
+})
+// -------------------------------------------------------------------------------
 
 // Handle unhandled promise rejections. No need to use try/catch in many async/awaits!
 process.on('unhandledRejection', (err, promise) => {

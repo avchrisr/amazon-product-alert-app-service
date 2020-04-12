@@ -5,6 +5,7 @@ const { formatISO, isBefore, parseISO, sub } = require('date-fns')
 const AWS = require('aws-sdk')
 const ErrorResponse = require('../util/ErrorResponse')
 const util = require('../util/util')
+const { emitData } = require('../socket-io')
 
 AWS.config.update({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -24,7 +25,9 @@ const queryParamsMap = {
 }
 
 async function checkItem(page, item) {
-    console.log(`Checking ${item.name.S}`)
+    console.log(`Checking for ${item.name.S}...`)
+    emitData(`Checking for ${item.name.S}...`)
+
     await page.goto(item.url.S)
 
     // --- captures screenshot ---
@@ -43,11 +46,15 @@ async function checkItem(page, item) {
             const notInStock = (await page.content()).match(/in stock on/gi)
             return (canAdd || canSubscribe) && !notInStock
         }
-        console.log(`item is available but the price (${price}) is above the price threshold ($${priceThreshold})`)
+        console.log(`${item.name.S} is available but the price (${price}) is above the price threshold ($${priceThreshold})`)
+        emitData(`${item.name.S} is available but the price (${price}) is above the price threshold ($${priceThreshold})`)
+
         return false
     }
 
     console.log(`${item.name.S} is not available.`)
+    emitData(`${item.name.S} is not available.`)
+
     return false
 }
 
@@ -60,9 +67,9 @@ const runProductScan = async (req, res, next) => {
     }
 
     const itemsAvailable = []
-
     console.log('')
-    console.log(`Starting at ${formatISO(Date.now())}`)
+    console.log(`Starting at ${new Date(Date.now()).toLocaleString()}`)
+    emitData(`Starting at ${new Date(Date.now()).toLocaleString()}`)
 
     // get items associated with the phone number from dynamodb
     const params = {
@@ -84,7 +91,12 @@ const runProductScan = async (req, res, next) => {
             success: true,
             data: `No product exists in DB. Please add some products.`
         })
+        emitData(`No product exists in DB. Please add some products.`)
+        return
     }
+
+    const productItems = _.sortBy(results.Items, (p) => _.lowerCase(p.name.S))
+
     const browser = await puppeteer.launch()
     const page = await browser.newPage()
     await page.setViewport({
@@ -97,7 +109,7 @@ const runProductScan = async (req, res, next) => {
         'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8'
     })
 
-    Bluebird.map(results.Items, async item => {
+    Bluebird.mapSeries(productItems, async (item, index) => {
         const oneDayAgo = sub(Date.now(), { days: 1 })
 
         // only send alert once a day if an item became available
@@ -106,8 +118,10 @@ const runProductScan = async (req, res, next) => {
 
             if (available) {
                 itemsAvailable.push(item.name.S)
-                // item.itemLastAvailableDateTime = formatISO(Date.now())          // 2020-04-03T18:10:17-07:00
+
                 console.log(`${item.name.S} is available.`)
+                emitData(`${item.name.S} is available.`)
+
                 const textMessage = `${item.name.S} available! ${item.url.S}`
                 await util.sendSMS(phoneNumber, textMessage)
 
@@ -138,14 +152,22 @@ const runProductScan = async (req, res, next) => {
                 await dynamodb.putItem(params).promise()
             }
 
-            console.log('Waiting...')
-            return Bluebird.delay(4000)
+            console.log(`index = ${index} || results.Items.length = ${results.Items.length}`)
+            if (index < results.Items.length - 1) {
+                console.log('Waiting...')
+                emitData('Preparing to check for next item...')
+                await Bluebird.delay(4000)
+            }
+        } else {
+            console.log(`${item.name.S} is available since ${new Date(item.itemLastAvailableDateTime.S).toLocaleString()}`)
+            emitData(`${item.name.S} is available since ${new Date(item.itemLastAvailableDateTime.S).toLocaleString()}`)
         }
     }, { concurrency: 1 }      // ** we HAVE TO check each product one at a time, not to be intrusive to the website **
     ).then(() => {
-        console.log('finishing...')
+        console.log('Finished scanning products.')
         return browser.close().then(() => {
-            console.log('browser closed')
+            console.log('puppeteer browser closed')
+            emitData('Finished scanning products.')
         })
 
         // ---  depending on the number of products to check, it might take too long. send back a response right away  ---
