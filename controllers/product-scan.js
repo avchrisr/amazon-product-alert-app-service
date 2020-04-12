@@ -38,7 +38,7 @@ async function checkItem(page, item) {
     if (sellingPriceElement) {
         // const val = await (await sellingPriceElement.getProperty('innerHTML')).jsonValue()  // $18.99
         const price = await (await sellingPriceElement.getProperty('innerText')).jsonValue()  // $18.99
-        const priceThreshold = parseFloat(item.priceThreshold.N)
+        const priceThreshold = (Math.round(parseFloat(item.priceThreshold.N) * 100) / 100).toFixed(2)
 
         if (priceThreshold < 0 || parseFloat(price.replace(/[^\d.]/g, '')) <= priceThreshold) {
             const canAdd = await page.$('#add-to-cart-button')
