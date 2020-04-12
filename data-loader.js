@@ -19,7 +19,7 @@ const dynamodb = new AWS.DynamoDB({
     apiVersion: '2012-08-10'
 })
 
-Bluebird.map(sampleData, async (item) => {
+Bluebird.mapSeries(sampleData, async (item) => {
     const priceThreshold = _.get(item, 'priceThreshold', -1)
 
     const params = {
