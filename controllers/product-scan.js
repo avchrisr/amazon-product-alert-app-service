@@ -28,6 +28,11 @@ async function checkItem(page, item) {
     console.log(`Checking for ${item.name.S}...`)
     emitData(`Checking for ${item.name.S}...`)
 
+    if (!util.isValidUrl(item.url.S)) {
+        emitData(`${item.url.S} is not a valid URL.`)
+        return
+    }
+
     await page.goto(item.url.S)
 
     // --- captures screenshot ---
@@ -91,7 +96,7 @@ const runProductScan = async (req, res, next) => {
             success: true,
             data: `No product exists in DB. Please add some products.`
         })
-        emitData(`No product exists in DB. Please add some products.`)
+        emitData(`Your list is empty. Please add some products.`)
         return
     }
 

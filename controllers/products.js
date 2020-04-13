@@ -53,6 +53,10 @@ const getProduct = async (req, res, next) => {
 }
 
 const createOrUpdateProduct = async (req, res, next) => {
+    if (!util.isValidUrl(req.body.url)) {
+        throw new ErrorResponse(`'${req.body.url}' is not a valid URL.`, 400)
+    }
+
     const priceThreshold = _.get(req, 'body.priceThreshold', -1)
     const params = {
         TableName: dynamodbTableName,
