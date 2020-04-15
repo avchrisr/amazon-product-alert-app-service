@@ -25,6 +25,7 @@ const queryParamsMap = {
 }
 
 const dynamodbTableName = 'apaa-phone-numbers'
+const preRegisteredPhoneNumbers = ['0000000000']
 
 // @route       GET /api/v1/products
 // @access      Public
@@ -65,6 +66,18 @@ const getPhoneNumber = async (req, res, next) => {
 
 const registerPhoneNumber = async (req, res, next) => {
     const phoneNumber = util.validatePhoneNumber(req.body.phoneNumber)
+
+    // if phone number === 0000000000, then accept it as auto-registered.
+    // Don't send alerts to this phone number.
+    console.log(preRegisteredPhoneNumbers)
+    if (preRegisteredPhoneNumbers.includes(phoneNumber)) {
+        await persistPhoneNumberAndGetInitialProducts(phoneNumber)
+        res.status(202).json({
+            success: true,
+            data: `${req.body.phoneNumber} is one of the pre-registered phone numbers.`
+        })
+        return
+    }
 
     const min = 100000
     const max = 999999
@@ -135,8 +148,17 @@ const confirmPhoneNumber = async (req, res, next) => {
         throw new ErrorResponse(genericErrorMessage, 400)
     }
 
+    await persistPhoneNumberAndGetInitialProducts(phoneNumber)
+
+    res.status(201).json({
+        success: true,
+        data: 'Phone number has been confirmed.'
+    })
+}
+
+const persistPhoneNumberAndGetInitialProducts = async (phoneNumber) => {
     // update entry with confirmed. It will do a PUT. e.g.) any missing attributes will be removed.
-    params = {
+    const params = {
         TableName: dynamodbTableName,
         Item: {
             phoneNumber: {
@@ -192,11 +214,6 @@ const confirmPhoneNumber = async (req, res, next) => {
             await dynamodb.putItem(params).promise()
         }
     }
-
-    res.status(201).json({
-        success: true,
-        data: 'Phone number has been confirmed.'
-    })
 }
 
 const deletePhoneNumber = async (req, res, next) => {
@@ -242,5 +259,6 @@ module.exports = {
     getPhoneNumber,
     registerPhoneNumber,
     confirmPhoneNumber,
-    deletePhoneNumber
+    deletePhoneNumber,
+    preRegisteredPhoneNumbers
 }

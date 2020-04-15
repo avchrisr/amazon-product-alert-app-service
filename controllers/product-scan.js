@@ -6,6 +6,7 @@ const AWS = require('aws-sdk')
 const ErrorResponse = require('../util/ErrorResponse')
 const util = require('../util/util')
 const { emitData } = require('../socket-io')
+const { preRegisteredPhoneNumbers } = require('./phone-numbers')
 
 AWS.config.update({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -128,7 +129,9 @@ const runProductScan = async (req, res, next) => {
                 emitData(`${item.name.S} is available.`)
 
                 const textMessage = `${item.name.S} available! ${item.url.S}`
-                await util.sendSMS(phoneNumber, textMessage)
+                if (!preRegisteredPhoneNumbers.includes(phoneNumber)) {
+                    await util.sendSMS(phoneNumber, textMessage)
+                }
 
                 // update the product item in DynamoDB
                 const params = {
@@ -157,7 +160,6 @@ const runProductScan = async (req, res, next) => {
                 await dynamodb.putItem(params).promise()
             }
 
-            console.log(`index = ${index} || results.Items.length = ${results.Items.length}`)
             if (index < results.Items.length - 1) {
                 console.log('Waiting...')
                 emitData('Preparing to check for next item...')
